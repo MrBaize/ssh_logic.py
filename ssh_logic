@@ -1,0 +1,53 @@
+import paramiko
+import time
+from Logger import Logger  # 假设你的Logger类在一个名为Logger.py的文件中
+
+class SSH_logic:
+    # 配置日志记录器
+    logger = Logger("ssh_log.log")
+    i = 1
+    # SSH连接配置
+    hostname = '192.168.226.141'
+    port = 22
+    username = 'xiaobaize'
+    password = '123456'
+
+    commands = [
+        'ls',  # 列出当前目录内容
+        'pwd',  # 显示当前工作目录
+        'df -h'  # 查看磁盘空间使用情况
+    ]
+
+    try:
+        # 创建SSH客户端
+        ssh_client = paramiko.SSHClient()
+        ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        # 连接到远程服务器
+        ssh_client.connect(hostname, port, username, password)
+        logger.write("------------------------第{}圈-----------------------\n".format(i))
+        # 执行命令集
+        # 执行命令集
+        for command in commands:
+            stdin, stdout, stderr = ssh_client.exec_command(command)
+            # 创建一个新的日志文件名
+            log_filename = f"{command}_loop_{i}_log"
+            with open(log_filename, 'w') as log_file:
+                for line in stdout:
+                    log_file.write(line.strip() + '\n')
+                    logger.write(line.strip() + '\n')
+                for line in stderr:
+                    log_file.write(line.strip() + '\n')
+                    logger.write(line.strip() + '\n')
+            logger.write(f"第{i}圈执行命令: {command}，输出已保存到 {log_filename}\n".format(i))
+            logger.write("---------------------------------------------------\n")
+            time.sleep(1)  # 等待1秒
+
+    except Exception as e:
+        logger.write(f'发生错误: {e}\n')
+
+    finally:
+        # 关闭SSH连接
+        ssh_client.close()
+        # 关闭日志记录器
+        logger.close()
